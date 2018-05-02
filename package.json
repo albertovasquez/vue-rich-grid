@@ -1,0 +1,43 @@
+{
+  "name": "vue-rich-grid",
+  "version": "1.0.0",
+  "description": "Powerful and flexible grid component for Vuejs",
+  "main": "src/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack -p"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albertovasquez/vue-rich-grid.git"
+  },
+  "keywords": [
+    "table",
+    "grid",
+    "vue"
+  ],
+  "author": "Alberto Vasquez <alberto.vasquez@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/albertovasquez/vue-rich-grid/issues"
+  },
+  "homepage": "https://github.com/albertovasquez/vue-rich-grid#readme",
+  "dependencies": {
+    "vue": "^2.5.16"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "cross-env": "^5.1.4",
+    "css-loader": "^0.28.11",
+    "file-loader": "^1.1.11",
+    "node-sass": "^4.9.0",
+    "sass-loader": "^7.0.1",
+    "vue-loader": "^15.0.5",
+    "vue-template-compiler": "^2.5.16",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.1.2",
+    "webpack-dev-server": "^3.1.3"
+  }
+}
