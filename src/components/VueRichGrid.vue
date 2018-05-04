@@ -245,7 +245,9 @@
         transition: opacity .6s;
 
         &.loading {
-            opacity: .4;
+            tbody {
+                opacity: .4;
+            }
         }
 
         >table {
