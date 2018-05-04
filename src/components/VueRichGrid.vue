@@ -275,7 +275,7 @@
 
 <style lang="scss" scoped>
     .vue-rich-grid {
-        font-family: 'Avenir';
+        font-family: 'Avenir', Arial;
         font-size: 14px;
         transition: opacity .6s;
 
@@ -284,6 +284,8 @@
         }
 
         >table {
+            border-spacing: 0;
+            border-collapse: collapse;
             margin-bottom: 10px;
             table-layout: fixed;
             width:100%;
@@ -291,6 +293,12 @@
 
             tbody {
                 border: 1px solid #EEE;
+                .richgrid-nodata {
+                    text-align: center;
+                    height: 60px;
+                    font-size: 18px;
+                    vertical-align: middle;
+                }
             }
 
             th.right,
@@ -345,17 +353,17 @@
             tr {
                 &.odd {
                     td {
-                        background-color: #fafafa;
+                        background-color: #f5f7fa;
                     }
                 }
                 td {
                     height: 20px;
-                    padding: 5px;
-                    padding-right: 10px;
-                    padding-left: 10px;
-                    border-bottom: 1px solid #eee;
+                    padding: 12px 10px 12px 10px;
+                    // border-bottom: 1px solid #eee;
+                        border-bottom: 1px solid #ffdeae;
                     background-color: #fff;
                     vertical-align: top;
+                    text-align: center;
                     &.active-column {
                         background-color: #eff7ff;
                         border-bottom: 1px solid #fff;
