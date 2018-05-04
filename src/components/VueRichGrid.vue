@@ -4,8 +4,8 @@
             <table>
                 <thead>
                     <tr>
-                        <th v-for="column in parsedColumns" v-on="sortable(column)" rowspan="1" colspan="1" :class="[column.getClass()]" :dataindex="column.id" :key="column.id" :style="column.getStyle()">
-                            <svg v-show="column.sortable" :class="column.dir" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="10px" height="10px" viewBox="0 0 401.998 401.998" style="top: 1px;position: relative; enable-background:new 0 0 401.998 401.998;" xml:space="preserve">
+                        <th v-for="column in columns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="column.data.id" :style="column.getStyle()">
+                            <svg v-show="column.data.sortable" :class="column.data.dir" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="10px" height="10px" viewBox="0 0 401.998 401.998" style="top: 1px;position: relative; enable-background:new 0 0 401.998 401.998;" xml:space="preserve">
                                 <g class="column-sort-up">
                                     <path d="M73.092,164.452h255.813c4.949,0,9.233-1.807,12.848-5.424c3.613-3.616,5.427-7.898,5.427-12.847 c0-4.949-1.813-9.229-5.427-12.85L213.846,5.424C210.232,1.812,205.951,0,200.999,0s-9.233,1.812-12.85,5.424L60.242,133.331 c-3.617,3.617-5.424,7.901-5.424,12.85c0,4.948,1.807,9.231,5.424,12.847C63.863,162.645,68.144,164.452,73.092,164.452z"/>
                                 </g>
@@ -13,7 +13,7 @@
                                     <path d="M328.905,237.549H73.092c-4.952,0-9.233,1.808-12.85,5.421c-3.617,3.617-5.424,7.898-5.424,12.847 c0,4.949,1.807,9.233,5.424,12.848L188.149,396.57c3.621,3.617,7.902,5.428,12.85,5.428s9.233-1.811,12.847-5.428l127.907-127.906 c3.613-3.614,5.427-7.898,5.427-12.848c0-4.948-1.813-9.229-5.427-12.847C338.139,239.353,333.854,237.549,328.905,237.549z" style=""/>
                                 </g>
                             </svg>
-                            <span>{{ column.text }}&nbsp;</span>
+                            <span>{{ column.data.text }}&nbsp;</span>
                         </th>
                         <th nowrap="nowrap" rowspan="1" colspan="1" class="extra_th" dataindex="extra_th" style="width:100%;display:none;">
                             <span class="">&nbsp;</span>
@@ -21,17 +21,20 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, rowIndex) in parsedRows" :class="{'odd':(rowIndex % 2)}" :key="rowIndex">
-                        <template v-for="column in parsedColumns">
-                            <td v-if="typeof $scopedSlots[column.id] !== 'undefined'" :key="column.id" :class="[row.getClass(column)]">
-                                <slot :name="column.id" :column="column" :data="row"></slot>
+                    <tr v-for="(row, rowIndex) in rows" :class="{'odd':(rowIndex % 2)}" :key="rowIndex">
+                        <template v-for="column in columns">
+                            <td v-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="column.data.id" :class="[row.getClass(column)]">
+                                <slot :name="column.data.id" :column="column.data" :data="row.data"></slot>
                             </td>
-                            <td v-else :key="column.id" :class="[row.getClass(column)]" v-html="renderData(column, row)"></td>
+                            <td v-else :key="column.data.id" :class="[row.getClass(column)]" v-html="row.renderData(column)"></td>
                         </template>
                         <td class="extra_td" valign="top"></td>
                     </tr>
-                    <tr v-show="!parsedRows.length && !loading">
-                        <td :colspan="parsedColumns.length" class="richgrid-nodata"><translate>No data found</translate></td>
+                    <tr v-show="!rows.length && !loading">
+                        <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="columns.length" class="richgrid-nodata">
+                            <slot name="nodata"></slot>
+                        </td>
+                        <td v-else :colspan="columns.length" class="richgrid-nodata">{{settings.noDataMessage}}</td>
                         <td class="extra_td" valign="top"></td>
                     </tr>
                 </tbody>
@@ -42,14 +45,17 @@
 </template>
 
 <script>
-    import axios from '@/mixins/axios.js';
-    import richPage from '@/components/VueRichPage';
+    import axios from '../mixins/axios.js';
+    import richPage from '../components/VueRichPage';
+    import Row from './Row';
+    import Column from './Column';
+
     let componentCount = 0;
     export default {
         mixins: [axios],
         components: { richPage },
         name: 'richgrid',
-        props: ['options'],
+        props: ['options','data'],
         methods: {
             /**
              * custom emitter used in the event
@@ -82,44 +88,35 @@
                 this.fetchRows();
             },
             /**
-             * Use column custom render
-             * If not present match data row
-             * by the columns dataIndex or Id
-             */
-            renderData(column, row) {
-                if (!column.renderer) {
-                    if (column.id) {
-                        return row[column.id]
-                    }
-                    return row[column.dataIndex]
-                }
-                return column.renderer(row[column.id], row);
-            },
-            /**
              * Dynamically adds a click handler
              * to the column that is sortable
              */
             sortable(column) {
                 if (column.sortable) {
-                    return { click: this.sort }
+                    return { click: this.sort.bind(this, column) }
                 }
                 return null
             },
             /**
-             * creates a new richColumn array which is used by
-             * computed property parsedColumns to display our header
+             * creates a new columns array by
+             * updating the dir and active propery
              */
-            sort(event) {
-                const columnId = event.currentTarget.getAttribute('dataindex');
-                this.richColumns = this.richColumns.map((col) => {
-                    if (col.id === columnId) {
-                        col.dir = (col.dir === 'asc') ? 'desc' : 'asc';
-                        this.sortingByColumn = col;
+            sort(clickedColumn) {
+                const activeColumn = this.columns.find(col => col.active);;
+                this.columns = this.columns.map((col) => {
+                    col.active = false;
+                    if (col.id === clickedColumn.id) {
+                        // only switch sort if active
+                        // column is clicked otherwise
+                        // just set the default sort
+                        if (activeColumn.id === col.id) {
+                            col.data.dir = (col.data.dir === 'asc') ? 'desc' : 'asc';
+                        }
+                        col.active = true;
                     }
                     return col;
                 });
 
-                this.settings.baseParams.sort = this.sortingByColumn.dataIndex;
                 this.fetchFromStart();
             },
             /**
@@ -132,96 +129,49 @@
              */
             fetchFromStart() {
                 this.params.start = 0;
-                const baseDir = this.$props.options.baseParams.dir;
-                this.params.dir = this.sortingByColumn ? this.sortingByColumn.dir : baseDir;
-                this.fetchRows();
+                const activeColumn = this.columns.find(col => col.active);
+                this.params.dir = activeColumn ? activeColumn.data.dir : this.settings.baseParams.dir;
                 this.$refs.pager.goPage(1, false);
+                this.fetchRows();
             },
             initialFetch: async function () {
-                const baseDir = this.$props.options.baseParams.dir;
-                this.params.dir = this.sortingByColumn && this.sortingByColumn.dir ? this.sortingByColumn.dir : baseDir;
+                const activeColumn = this.columns.find(col => col.active);
+                this.params.dir = activeColumn ? activeColumn.data.dir : this.settings.baseParams.dir;
                 await this.fetchRows();
             },
             fetchRows: async function () {
                 this.setLoading(true);
-                const response = await this.get(this.settings.url);
-                let rows = [];
-                if (!response.data) {
-                    console.error(`Richgrid did not receive data from ${this.$props.url}`)
-                }
+                let rows = this.$props.data || [];
 
-                // get rows
-                if (this.settings.rootElement) {
-                    rows = response.data[this.settings.rootElement];
+                // only try to do an async
+                // get if a plugin was added
+                // that provides the method
+                if (this.get) {
+                    const response = await this.get(this.settings.url);
+                    if (!response.data) {
+                        console.error(`Richgrid did not receive data from ${this.settings.url}`)
+                    }
+
+                    // get rows
+                    if (this.settings.rootElement) {
+                        rows = response.data[this.settings.rootElement];
+                    } else {
+                        rows = response.data;
+                    }
+
+                    // get total rows
+                    if (this.settings.totalProperty) {
+                        this.pageSet.totalRow = response.data[this.settings.totalProperty];
+                    } else {
+                        this.pageSet.totalRow = response.data.totalcount;
+                    }
                 } else {
-                    rows = response.data;
+                    this.pageSet.totalRow = rows.length;
                 }
 
-                // get total rows
-                if (this.settings.totalProperty) {
-                    this.pageSet.totalRow = response.data[this.settings.totalProperty];
-                } else {
-                    this.pageSet.totalRow = response.data.totalcount;
-                }
-
-                this.rows = rows;
+                // populate rows with array of Classes
+                this.rows = rows.map(row => new Row(row));
                 this.setLoading(false);
-            },
-        },
-        computed: {
-            parsedRows() {
-                return this.rows.map(row => Object.assign(row, {
-                    getClass: (column) => {
-                        const rowClasses = [];
-                        if (column.align) {
-                            rowClasses.push(column.align);
-                        }
-
-                        if (this.sortingByColumn && this.sortingByColumn.id === column.id) {
-                            rowClasses.push('active-column');
-                        }
-                        return rowClasses;
-                    },
-                }));
-            },
-            parsedColumns: function() {
-                const columns = this.richColumns.map(column => Object.assign(column, {
-                    dir: column.dir ? column.dir : this.$props.options.baseParams.dir,
-                    getStyle: () => {
-                        if (column.width) {
-                            return `width:${column.width}px`;
-                        }
-                        return "";
-                    },
-                    getClass: () => {
-                        const colClasses = [];
-                        if (column.align) {
-                            colClasses.push(column.align);
-                        }
-                        if (column.sortable) {
-                            colClasses.push('sort-icon');
-                            colClasses.push('sortable');
-                            colClasses.push(`sort-${column.dir}`);
-                            // initial load lets determien if I am selected
-                            if (this.sortingByColumn && this.sortingByColumn.dataIndex === column.dataIndex) {
-                                colClasses.push('active-column');
-                            }
-                        }
-                        return colClasses;
-                    },
-                }));
-
-                // determine what the initial
-                // selected column is if any at all.
-                // then perform the initial search
-                // if option of render on load is true
-                if (!this.initialLoad) {
-                    this.initialLoad = true;
-                    this.sortingByColumn = columns.find(col => col.dataIndex === this.$props.options.baseParams.sort);
-                    this.initialFetch();
-                }
-
-                return columns;
             },
         },
         data(props) {
@@ -229,17 +179,23 @@
             const defaults = Object.assign({}, {
                 columns: [],
                 baseParams: {},
-                pageSizeMenu: [5, 10, 20, 50, 100],
+                noDataMessage: 'No data found',
+                pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options || {});
 
             if (defaults.baseParams.limit) {
                 defaults.baseParams.limit = parseInt(defaults.baseParams.limit, 10);
             } else {
-                defaults.baseParams.limit = 0;
+                defaults.baseParams.limit = 5;
             }
 
             if (!defaults.baseParams.dir) {
                 defaults.baseParams.dir = 'asc';
+            }
+
+            let rows = []
+            if (props.data) {
+                rows = props.data;
             }
 
             return {
@@ -254,10 +210,9 @@
                 },
                 loading: false,
                 richId: null,
-                richColumns: defaults.columns,
-                sortingByColumn: null,
+                columns: defaults.columns.map(column => new Column(column, defaults.baseParams)),
                 rows: [],
-                initialLoad: false,
+                initialLoad: true,
                 gridCount: null,
             }
         },
@@ -270,6 +225,16 @@
                 this.richId = `rich-grid-${componentCount}`
             }
         },
+        mounted() {
+            // determine what the initial
+            // selected column is if any at all.
+            // then perform the initial search
+            // if option of render on load is true
+            if (this.initialLoad) {
+                this.initialLoad = false;
+                this.initialFetch();
+            }
+        }
     }
 </script>
 
