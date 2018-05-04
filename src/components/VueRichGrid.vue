@@ -102,7 +102,7 @@
              * updating the dir and active propery
              */
             sort(clickedColumn) {
-                const activeColumn = this.columns.find(col => col.active);;
+                const activeColumn = this.columns.find(col => col.active);
                 this.columns = this.columns.map((col) => {
                     col.active = false;
                     if (col.id === clickedColumn.id) {
@@ -117,6 +117,7 @@
                     return col;
                 });
 
+                this.settings.baseParams.sort = clickedColumn.id;
                 this.fetchFromStart();
             },
             /**
@@ -333,7 +334,7 @@
                     text-align: center;
                     &.active-column {
                         background-color: #eff7ff;
-                        border-bottom: 1px solid #fff;
+                        border-bottom: 1px solid #b7e4f8;
                         border-left: 1px solid #eee;
                         border-right: 1px solid #eee;
                     }
