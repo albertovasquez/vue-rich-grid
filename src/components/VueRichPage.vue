@@ -208,6 +208,7 @@
                 }
 
                 select {
+                    font-size: 13px;
                     box-shadow: $inset;
                     border: 1px solid #C4C4C4;
                     vertical-align: baseline;
