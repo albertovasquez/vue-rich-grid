@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export default {
     methods: {
         get: function (url) {
