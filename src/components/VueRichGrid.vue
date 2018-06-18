@@ -46,9 +46,9 @@
 
 <script>
     import axios from '../mixins/axios.js';
-    import richPage from '../components/VueRichPage';
     import Row from './Row';
     import Column from './Column';
+    import get from 'lodash.get';
     import RichPage from '../components/VueRichPage';
 
     let componentCount = 0;
@@ -99,11 +99,11 @@
                 }
             },
             //receive page info change callback
-            pageChange(pInfo){
+            pageChange: async function(pInfo){
                 // update params with new page info
                 this.params.limit = pInfo.pageSize;
-                this.params.start = (pInfo.pageNumber - 1) * pInfo.pageSize;
-                this.fetchRows();
+                const newPage = (pInfo.pageNumber - 1) * pInfo.pageSize;
+                await this.fetchRows(newPage);
             },
             /**
              * Dynamically adds a click handler
@@ -146,21 +146,21 @@
              * Note: This is called externally by ref
              * Do not delete this method or rename it
              */
-            fetchFromStart() {
-                this.params.start = 0;
+            fetchFromStart: async function() {
                 const activeColumn = this.columns.find(col => col.active);
-                this.params.dir = activeColumn ? activeColumn.data.dir : this.settings.baseParams.dir;
                 this.$refs.pager.goPage(1, false);
-                this.fetchRows();
+                this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
+                await this.fetchRows(0);
             },
             initialFetch: async function () {
                 const activeColumn = this.columns.find(col => col.active);
-                this.params.dir = activeColumn ? activeColumn.data.dir : this.settings.baseParams.dir;
-                await this.fetchRows();
+                this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
+                await this.fetchRows(0);
             },
-            fetchRows: async function () {
+            fetchRows: async function (start = 0) {
                 this.setLoading(true);
                 let rows = this.$props.data || [];
+                this.params.start = start;
 
                 // only try to do an async
                 // get if a plugin was added
@@ -202,20 +202,8 @@
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options || {});
 
-            if (defaults.baseParams.limit) {
-                defaults.baseParams.limit = parseInt(defaults.baseParams.limit, 10);
-            } else {
-                defaults.baseParams.limit = 5;
-            }
-
-            if (!defaults.baseParams.dir) {
-                defaults.baseParams.dir = 'asc';
-            }
-
-            let rows = []
-            if (props.data) {
-                rows = props.data;
-            }
+            defaults.baseParams.limit = props.limit;
+            defaults.baseParams.dir = props.dir;
 
             return {
                 settings: defaults,
