@@ -49,11 +49,12 @@
     import richPage from '../components/VueRichPage';
     import Row from './Row';
     import Column from './Column';
+    import RichPage from '../components/VueRichPage';
 
     let componentCount = 0;
     export default {
         mixins: [axios],
-        components: { richPage },
+        components: { 'richPage': RichPage },
         name: 'richgrid',
         props: {
             options: {
