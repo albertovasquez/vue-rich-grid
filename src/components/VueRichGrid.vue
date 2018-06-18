@@ -127,7 +127,7 @@
                         // only switch sort if active
                         // column is clicked otherwise
                         // just set the default sort
-                        if (activeColumn.id === col.id) {
+                        if (activeColumn && activeColumn.id === col.id) {
                             col.data.dir = (col.data.dir === 'asc') ? 'desc' : 'asc';
                         }
                         col.active = true;
