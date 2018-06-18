@@ -55,7 +55,24 @@
         mixins: [axios],
         components: { richPage },
         name: 'richgrid',
-        props: ['options','data'],
+        props: {
+            options: {
+                type: Object,
+                default() {},
+            },
+            data: {
+                type: Array,
+                default() { return []},
+            },
+            limit: {
+                type: Number,
+                default: 5,
+            },
+            dir: {
+                type: String,
+                default: 'asc',
+            },
+        },
         methods: {
             /**
              * custom emitter used in the event
