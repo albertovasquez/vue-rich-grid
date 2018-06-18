@@ -113,7 +113,7 @@
                 if (column.sortable) {
                     return { click: this.sort.bind(this, column) }
                 }
-                return null
+                return null;
             },
             /**
              * creates a new columns array by
