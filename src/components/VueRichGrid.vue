@@ -160,8 +160,10 @@
             },
             fetchRows: async function (start = 0) {
                 this.setLoading(true);
-                let rows = this.$props.data || [];
                 this.params.start = start;
+
+                let rows = this.$props.data || [];
+                this.pageSet.totalRow = rows.length;
 
                 // only try to do an async
                 // get if a plugin was added that
@@ -179,14 +181,26 @@
                         rows = response.data;
                     }
 
-                    // get total rows
+                    // update paging totalRows based
+                    // on the returned results from get
                     if (this.settings.totalProperty) {
                         this.pageSet.totalRow = response.data[this.settings.totalProperty];
                     } else {
                         this.pageSet.totalRow = response.data.totalcount;
                     }
-                } else {
-                    this.pageSet.totalRow = rows.length;
+                } else if(rows.length){
+                    // we are dealing with data array
+                    // all sorts and filters are done locally
+                    const activeColumn = this.columns.find(col => col.active);
+                    // if we have an active column sort by the id
+                    if (activeColumn) {
+                        rows = rows.sort((a, b) => get(activeColumn, 'data.dir', this.settings.baseParams.dir) === 'asc' ?
+                                a[activeColumn.id] < b[activeColumn.id] :
+                                a[activeColumn.id] > b[activeColumn.id]);
+                    }
+
+                    // limit by page size
+                    rows = rows.slice(this.params.start, this.params.start + this.pageSet.pageSize);
                 }
 
                 // populate rows with array of Classes
