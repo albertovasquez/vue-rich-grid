@@ -102,6 +102,7 @@
             pageChange: async function(pInfo){
                 // update params with new page info
                 this.params.limit = pInfo.pageSize;
+                this.pageSet.pageSize = pInfo.pageSize;
                 const newPage = (pInfo.pageNumber - 1) * pInfo.pageSize;
                 await this.fetchRows(newPage);
             },
