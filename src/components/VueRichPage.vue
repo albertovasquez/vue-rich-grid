@@ -1,5 +1,5 @@
 <template>
-    <div :class="[loading ? 'pager-loading' : '', pageClass, (totalRow === 0) ? 'pager-empty' : '', 'vue-rich-pager' ]">
+    <div :class="[loading ? 'pager-loading' : '', pageClass, (totalRow === 0 || !visible) ? 'hide-pager' : '', 'vue-rich-pager' ]">
         <div class="vue-page-info">
             {{ `Page ${currentPage} of ${totalPage} （${totalRow} items)` }}
         </div>
@@ -160,7 +160,7 @@
         &.pager-loading {
             opacity: .8;
         }
-        &.pager-empty {
+        &.hide-pager {
             display:none;
         }
         &.pager-right{
