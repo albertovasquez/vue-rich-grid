@@ -60,6 +60,8 @@
             };
         },
         computed:{
+            visible: function() {
+                return (this.totalRow > this.pageNumberSize);
             },
             pageNumbers: function(){
                 let start, end, nums = [], pNum = this.currentPage, half = Math.floor(this.pageNumberSize / 2);
