@@ -1,7 +1,7 @@
 <template>
     <div :class="[loading ? 'pager-loading' : '', pageClass, (totalRow === 0 || !visible) ? 'hide-pager' : '', 'vue-rich-pager' ]">
         <div class="vue-page-info">
-            {{ `Page ${currentPage} of ${totalPage} （${totalRow} items)` }}
+            {{ `Showing ${fromRow} to ${toRow} of ${totalRow} entries` }}
         </div>
         <ul>
             <li>
@@ -60,6 +60,12 @@
             };
         },
         computed:{
+            fromRow: function() {
+                return (this.currentPage - 1) * this.pageNumberSize + 1;
+            },
+            toRow: function() {
+                return this.fromRow + this.rowsLength - 1;
+            },
             visible: function() {
                 return (this.totalRow > this.pageNumberSize);
             },
