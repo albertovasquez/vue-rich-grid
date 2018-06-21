@@ -45,7 +45,6 @@
 </template>
 
 <script>
-    import axiosMixin from '../mixins/axios.js';
     import Row from './Row';
     import Column from './Column';
     import get from 'lodash.get';
@@ -53,7 +52,6 @@
 
     let componentCount = 0;
     export default {
-        mixins: [axiosMixin],
         components: { 'richPage': RichPage },
         name: 'richgrid',
         props: {
@@ -172,8 +170,8 @@
                 // only try to do an async
                 // get if a plugin was added that
                 // provides the method and a url is provided
-                if (this.get && this.settings.url) {
-                    const response = await this.get(this.settings.url);
+                if (this.httpGet && this.settings.url) {
+                    const response = await this.httpGet(this.settings.url);
                     if (!response.data) {
                         console.error(`Richgrid did not receive data from ${this.settings.url}`)
                     }
