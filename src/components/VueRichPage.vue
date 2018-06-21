@@ -153,7 +153,7 @@
     $inset: inset 2px -11px 14px 1px rgba(0, 0, 0, 0.08);
 
     .vue-rich-pager {
-        font-family: 'Avenir';
+        font-family: 'Avenir', Arial;
         transition: opacity .3s;
         margin: 0;
         display: block;
@@ -170,6 +170,7 @@
             text-align: center;
         }
         > ul {
+            font-size: 12px;
             margin: 0 0 0 0;
             display: inline-block;
             > li {
