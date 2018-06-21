@@ -218,7 +218,7 @@
                 }
 
                 select {
-                    font-size: 13px;
+                    font-size: 12px;
                     box-shadow: $inset;
                     border: 1px solid #C4C4C4;
                     vertical-align: baseline;
@@ -235,7 +235,7 @@
         .vue-page-info {
             height: 20px;
             font-size:14px;
-            padding: 6px 12px;
+            padding: 6px 0;
             float: left;
             border-left-width: 0;
             color: #444;
