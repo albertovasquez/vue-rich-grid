@@ -67,14 +67,6 @@
                 type: Array,
                 default() { return []},
             },
-            limit: {
-                type: Number,
-                default: 5,
-            },
-            dir: {
-                type: String,
-                default: 'asc',
-            },
         },
         methods: {
             /**
@@ -221,10 +213,6 @@
                 noDataText: 'No data found',
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options || {});
-
-            defaults.baseParams.limit = props.limit;
-            defaults.baseParams.dir = props.dir;
-
             return {
                 settings: defaults,
                 pageSet: {
