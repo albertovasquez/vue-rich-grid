@@ -21,7 +21,7 @@
             </li>
             <li>
                 <select @change="switchLength" v-model="pageSize">
-                    <option v-for="(len, index) in lengthList" :key="index" :value="len">Page size | {{len}}</option>
+                    <option v-for="(len, index) in lengthList" :key="index" :value="len">{{len}}</option>
                 </select>
             </li>
         </ul>
