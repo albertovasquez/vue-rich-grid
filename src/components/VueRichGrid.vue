@@ -220,6 +220,7 @@
                     limit: 10,
                     dir: 'asc',
                 },
+                noDataText: 'No data found',
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options || {});
 
