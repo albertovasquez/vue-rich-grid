@@ -40,7 +40,7 @@
                 </tbody>
             </table>
         </div>
-        <rich-page :setting="pageSet" ref="pager" :loading="loading" @page-change="pageChange"></rich-page>
+        <rich-page :setting="pageSet" :rowsLength="rowsLength" ref="pager" :loading="loading" @page-change="pageChange"></rich-page>
     </div>
 </template>
 
@@ -204,6 +204,7 @@
                 }
 
                 // populate rows with array of Classes
+                this.rowsLength = rows.length;
                 this.rows = rows.map(row => new Row(row));
                 this.setLoading(false);
             },
@@ -230,6 +231,7 @@
                 params: {
                     start: 0,
                 },
+                rowsLength: 0,
                 loading: false,
                 richId: null,
                 columns: defaults.columns.map(column => new Column(column, defaults.baseParams)),

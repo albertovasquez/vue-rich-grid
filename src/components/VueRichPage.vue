@@ -31,8 +31,8 @@
 <script>
     export default {
         name: "v-page",
-        props: ['setting', 'loading'],
-        data(){
+        props: ['setting', 'rowsLength', 'loading'],
+        data(props){
             let config = Object.assign({}, {
                 totalRow: 0,
                 pageSize: 5,
