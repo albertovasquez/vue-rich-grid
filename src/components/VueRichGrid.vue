@@ -216,9 +216,10 @@
         data(props) {
             // lets merge our passed options with defaults
             const defaults = Object.assign({}, {
-                columns: [],
-                baseParams: {},
-                noDataMessage: 'No data found',
+                baseParams: {
+                    limit: 10,
+                    dir: 'asc',
+                },
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options || {});
 
