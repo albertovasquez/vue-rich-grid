@@ -4,7 +4,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th v-for="column in columns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="column.data.id" :style="column.getStyle()">
+                        <th v-for="column in richColumns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="column.data.id" :style="column.getStyle()">
                             <svg v-show="column.data.sortable" :class="column.data.dir" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="10px" height="10px" viewBox="0 0 401.998 401.998" style="top: 1px;position: relative; enable-background:new 0 0 401.998 401.998;" xml:space="preserve">
                                 <g class="column-sort-up">
                                     <path d="M73.092,164.452h255.813c4.949,0,9.233-1.807,12.848-5.424c3.613-3.616,5.427-7.898,5.427-12.847 c0-4.949-1.813-9.229-5.427-12.85L213.846,5.424C210.232,1.812,205.951,0,200.999,0s-9.233,1.812-12.85,5.424L60.242,133.331 c-3.617,3.617-5.424,7.901-5.424,12.85c0,4.948,1.807,9.231,5.424,12.847C63.863,162.645,68.144,164.452,73.092,164.452z"/>
@@ -22,7 +22,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="(row, rowIndex) in rows" :class="{'odd':(rowIndex % 2)}" :key="rowIndex">
-                        <template v-for="column in columns">
+                        <template v-for="column in richColumns">
                             <td v-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="column.data.id" :class="[row.getClass(column)]">
                                 <slot :name="column.data.id" :column="column.data" :data="row.data"></slot>
                             </td>
@@ -31,10 +31,10 @@
                         <td class="extra_td" valign="top"></td>
                     </tr>
                     <tr v-show="!rows.length && !loading">
-                        <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="columns.length" class="richgrid-nodata">
+                        <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="richColumns.length" class="richgrid-nodata">
                             <slot name="nodata"></slot>
                         </td>
-                        <td v-else :colspan="columns.length" class="richgrid-nodata">{{settings.noDataMessage}}</td>
+                        <td v-else :colspan="richColumns.length" class="richgrid-nodata">{{settings.noDataText}}</td>
                         <td class="extra_td" valign="top"></td>
                     </tr>
                 </tbody>
@@ -57,6 +57,10 @@
         components: { 'richPage': RichPage },
         name: 'richgrid',
         props: {
+            columns: {
+                type: Array,
+                default() { return []},
+            },
             options: {
                 type: Object,
                 default() {},
@@ -121,8 +125,8 @@
              * updating the dir and active propery
              */
             sort(clickedColumn) {
-                const activeColumn = this.columns.find(col => col.active);
-                this.columns = this.columns.map((col) => {
+                const activeColumn = this.richColumns.find(col => col.active);
+                this.richColumns = this.richColumns.map((col) => {
                     col.active = false;
                     if (col.id === clickedColumn.id) {
                         // only switch sort if active
@@ -148,13 +152,13 @@
              * Do not delete this method or rename it
              */
             fetchFromStart: async function() {
-                const activeColumn = this.columns.find(col => col.active);
+                const activeColumn = this.richColumns.find(col => col.active);
                 this.$refs.pager.goPage(1, false);
                 this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
                 await this.fetchRows(0);
             },
             initialFetch: async function () {
-                const activeColumn = this.columns.find(col => col.active);
+                const activeColumn = this.richColumns.find(col => col.active);
                 this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
                 await this.fetchRows(0);
             },
@@ -191,7 +195,7 @@
                 } else if(rows.length){
                     // we are dealing with data array
                     // all sorts and filters are done locally
-                    const activeColumn = this.columns.find(col => col.active);
+                    const activeColumn = this.richColumns.find(col => col.active);
                     // if we have an active column sort by the id
                     if (activeColumn) {
                         rows = rows.sort((a, b) => get(activeColumn, 'data.dir', this.settings.baseParams.dir) === 'asc' ?
@@ -234,7 +238,7 @@
                 rowsLength: 0,
                 loading: false,
                 richId: null,
-                columns: defaults.columns.map(column => new Column(column, defaults.baseParams)),
+                richColumns: props.columns.map(column => new Column(column, defaults.baseParams)),
                 rows: [],
                 initialLoad: true,
                 gridCount: null,
