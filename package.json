@@ -17,7 +17,7 @@
     "vue"
   ],
   "author": "Alberto Vasquez <alberto.vasquez@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/albertovasquez/vue-rich-grid/issues"
   },
