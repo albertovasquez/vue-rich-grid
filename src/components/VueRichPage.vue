@@ -1,27 +1,27 @@
 <template>
-    <div :class="[loading ? 'pager-loading' : '', pageClass, (totalRow === 0 || !visible) ? 'hide-pager' : '', 'vue-rich-pager' ]">
+    <div :class="[loading ? 'pager-loading' : '', hidePager ? 'hide-pager' : '', 'vue-rich-pager' ]">
         <div class="vue-page-info">
             {{ `Showing ${fromRow} to ${toRow} of ${totalRow} entries` }}
         </div>
         <ul>
             <li>
-                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('first')">{{firstLabel}}</a>
+                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('first')">&lt;&lt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('previous')">{{previousLabel}}</a>
+                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('previous')">&lt;</a>
             </li>
             <li v-for="(num,index) in pageNumbers" :key="index">
                 <a :class="[num === currentPage ? 'active': '']" href="javascript:" @click="switchPage(num)">{{num}}</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('next')">{{nextLabel}}</a>
+                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('next')">&gt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('last')">{{lastLabel}}</a>
+                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('last')">&gt;&gt;</a>
             </li>
             <li>
-                <select @change="switchLength" v-model="pageSize">
-                    <option v-for="(len, index) in lengthList" :key="index" :value="len">{{len}}</option>
+                <select @change="goPage(1)" v-model="pageSize">
+                    <option v-for="(len, index) in config.pageSizeMenu" :key="index" :value="len">{{len}}</option>
                 </select>
             </li>
         </ul>
@@ -29,71 +29,71 @@
 </template>
 
 <script>
+    import get from 'lodash.get';
+
     export default {
         props: ['settings', 'rowsLength', 'loading'],
         data(props){
-            let config = Object.assign({}, {
-                totalRow: 0,
-                pageSize: 5,
-                pageSizeMenu: [5,10,20,50,100],
-                align: 'right'
-            }, this.setting);
             return {
-                firstLabel: "<<",
-                previousLabel: "<",
-                nextLabel: ">",
-                lastLabel: ">>",
-                config: config,
+                config: Object.assign({}, {
+                    hidePagerWhenShowingAll: false,
+                    pageSizeMenu: [5,10,20,50,100],
+                }, this.settings),
+                pageSize: get(props, 'settings.pageSize', 5),
+                totalRow: get(props, 'settings.totalRow', 0),
                 pageNumber: 1,
-                pageSize: config.pageSize,
-                totalRow: config.totalRow,
                 totalPage: 0,
                 currentPage: 1,
-                lengthList: config.pageSizeMenu,
-                pageNumberSize: 5,
-                pageClass : {
-                    vPagination: false,
-                    vPaginationRight: false,
-                    vPaginationCenter: false
-                }
+                // total number of page buttons we want
+                // to divide our paging options into.
+                maxPageNumberSize: 4,
             };
         },
         computed:{
-            fromRow: function() {
-                return (this.currentPage - 1) * this.pageNumberSize + 1;
-            },
-            toRow: function() {
-                return this.fromRow + this.rowsLength - 1;
-            },
-            visible: function() {
-                return (this.totalRow > this.pageNumberSize);
-            },
-            pageNumbers: function(){
-                let start, end, nums = [], pNum = this.currentPage, half = Math.floor(this.pageNumberSize / 2);
-                if(this.totalPage < this.pageNumberSize) {
+            fromRow: cmp => (cmp.currentPage - 1) * cmp.pageSize + 1,
+            toRow: cmp => cmp.fromRow + cmp.rowsLength - 1,
+            /**
+             * Hides pager if all rows are visible and
+             * hidePagerWhenShowingAll was explicitly passed as true
+             */
+            hidePager: cmp => ((cmp.totalRow <= cmp.pageSize && cmp.config.hidePagerWhenShowingAll) ||
+                                cmp.totalRow === 0),
+            /**
+             * Calculate the different paging options
+             * where maxPageNumberSize is the max available
+             */
+            pageNumbers: (cmp) => {
+                let start;
+                let end;
+                let numOptions = [];
+                let half = Math.floor(cmp.maxPageNumberSize / 2);
+
+                if(cmp.totalPage < cmp.maxPageNumberSize) {
                     start = 1;
-                    end = this.totalPage;
-                } else if ( pNum <= half ) {
+                    end = cmp.totalPage;
+                } else if ( cmp.currentPage <= half ) {
                     start = 1;
-                    end = this.pageNumberSize;
-                } else if ( pNum >= (this.totalPage - half) ) {
-                    start = this.totalPage - this.pageNumberSize + 1;
-                    end = this.totalPage;
+                    end = cmp.maxPageNumberSize;
+                } else if ( cmp.currentPage >= (cmp.totalPage - half) ) {
+                    start = cmp.totalPage - cmp.maxPageNumberSize + 1;
+                    end = cmp.totalPage;
                 } else {
-                    start = pNum - half;
-                    end = start + this.pageNumberSize - 1;
+                    start = cmp.currentPage - half;
+                    end = start + cmp.maxPageNumberSize - 1;
                 }
+
                 for(let i = start;i <= end; i++){
-                    nums.push(i);
+                    numOptions.push(i);
                 }
-                return nums;
+
+                return numOptions;
             }
         },
         watch:{
-            'setting.totalRow':function(val){
+            'settings.totalRow':function(val){
                 this.totalRow = val;
-                if(!this.lengthList.includes(this.pageSize)){
-                    this.pageSize = this.lengthList[0];
+                if(!this.config.pageSizeMenu.includes(this.pageSize)){
+                    this.pageSize = this.config.pageSizeMenu[0];
                 }
                 this.calcTotalPage();
             }
@@ -112,41 +112,49 @@
             calcTotalPage(){
                 this.totalPage = Math.ceil(this.totalRow / this.pageSize);
             },
-            switchPage(pNum){
-                if (pNum === this.currentPage) return;
-                if(typeof(pNum) === 'string'){
-                    switch (pNum){
+            switchPage(pageNumber){
+                if (pageNumber === this.currentPage) {
+                    return;
+                }
+
+                if(typeof(pageNumber) === 'string'){
+                    switch (pageNumber){
                         case 'first':
-                            if(this.currentPage!==1) this.currentPage = 1;
-                            else return;
+                            if(this.currentPage!==1) {
+                                this.currentPage = 1;
+                            } else {
+                                return;
+                            }
                             break;
                         case 'previous':
-                            if(this.currentPage!==1) this.currentPage--;
-                            else return;
+                            if(this.currentPage!==1) {
+                                this.currentPage--;
+                            } else {
+                                return;
+                            }
                             break;
                         case 'next':
-                            if(this.currentPage!==this.totalPage) this.currentPage++;
-                            else return;
+                            if(this.currentPage!==this.totalPage) {
+                                this.currentPage++;
+                            } else {
+                                return;
+                            }
                             break;
                         case 'last':
-                            if(this.currentPage!==this.totalPage) this.currentPage = this.totalPage;
-                            else return;
+                            if(this.currentPage!==this.totalPage) {
+                                this.currentPage = this.totalPage;
+                            } else {
+                                return;
+                            }
                             break;
                     }
-                }else if(typeof(pNum) === 'number'){
-                    this.currentPage = pNum;
+                }else if(typeof(pageNumber) === 'number'){
+                    this.currentPage = pageNumber;
                 }
                 this.goPage(this.currentPage);
             },
-            switchLength(){
-                this.goPage(1);
-            }
         },
         mounted(){
-            if(this.config.align === 'center')
-                this.pageClass['pager-center'] = true;
-            else if(this.config.align === 'right')
-                this.pageClass['pager-right'] = true;
             // Lets not emit on the first mount
             this.goPage(1, false);
         }
@@ -162,17 +170,12 @@
         transition: opacity .3s;
         margin: 0;
         display: block;
+        text-align: right;
         &.pager-loading {
             opacity: .8;
         }
         &.hide-pager {
             display:none;
-        }
-        &.pager-right{
-            text-align: right;
-        }
-        &.pager-center{
-            text-align: center;
         }
         > ul {
             font-size: 12px;
