@@ -40,7 +40,7 @@
                 </tbody>
             </table>
         </div>
-        <rich-page :setting="pageSet" :rowsLength="rowsLength" ref="pager" :loading="loading" @page-change="pageChange"></rich-page>
+        <rich-page :settings="pageSet" :rowsLength="rowsLength" ref="pager" :loading="loading" @page-change="pageChange"></rich-page>
     </div>
 </template>
 
@@ -211,7 +211,7 @@
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options);
 
-            defaults.baseParams.limit = defaults.baseParams.limit || 10;
+            defaults.baseParams.limit = defaults.baseParams.limit || 5;
             defaults.baseParams.dir = defaults.baseParams.dir || 'asc';
 
             return {
