@@ -183,9 +183,19 @@
                     const activeColumn = this.richColumns.find(col => col.active);
                     // if we have an active column sort by the id
                     if (activeColumn) {
-                        rows = rows.sort((a, b) => get(activeColumn, 'data.dir', this.settings.baseParams.dir) === 'asc' ?
-                                a[activeColumn.id] < b[activeColumn.id] :
-                                a[activeColumn.id] > b[activeColumn.id]);
+                        rows.sort((a, b) => {
+                            // If parsing Non numbers return NaN just use unParsedValues
+                            // otherwise lets deal with numbers for more accurage sorts
+                            const aId = Number.isNaN(parseInt(a[activeColumn.id], 10)) ? a[activeColumn.id] : parseInt(a[activeColumn.id], 10);
+                            const bId = Number.isNaN(parseInt(b[activeColumn.id], 10)) ? b[activeColumn.id] : parseInt(b[activeColumn.id], 10);
+                            const dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
+                            if ( dir === 'asc') {
+                                return (aId < bId) ? -1 : 1;
+                            } else {
+                                return (aId > bId) ? 1 : -1;
+                            }
+                            return 0;
+                        });
                     }
 
                     // limit by page size
