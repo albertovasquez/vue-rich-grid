@@ -216,9 +216,8 @@
                 pageSizeMenu: [5, 10, 20, 50, 100, 300],
             }, props.options);
 
-            defaults.baseParams.limit = defaults.baseParams.limit || 5;
-            defaults.baseParams.dir = defaults.baseParams.dir || 'asc';
-
+            defaults.baseParams.limit = get(defaults, 'baseParams.limit', 5);
+            defaults.baseParams.dir = get(defaults, 'baseParams.dir', 'asc');
             return {
                 settings: defaults,
                 pageSet: {
