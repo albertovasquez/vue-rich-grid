@@ -15,9 +15,6 @@
                             </svg>
                             <span>{{ column.data.text }}&nbsp;</span>
                         </th>
-                        <th nowrap="nowrap" rowspan="1" colspan="1" class="extra_th" dataindex="extra_th" style="width:100%;display:none;">
-                            <span class="">&nbsp;</span>
-                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -28,14 +25,12 @@
                             </td>
                             <td v-else :key="column.data.id" :class="[row.getClass(column)]" v-html="row.renderData(column)"></td>
                         </template>
-                        <td class="extra_td" valign="top"></td>
                     </tr>
                     <tr v-show="!rows.length && !loading">
                         <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="richColumns.length" class="richgrid-nodata">
                             <slot name="nodata"></slot>
                         </td>
                         <td v-else :colspan="richColumns.length" class="richgrid-nodata">{{settings.noDataText}}</td>
-                        <td class="extra_td" valign="top"></td>
                     </tr>
                 </tbody>
             </table>
