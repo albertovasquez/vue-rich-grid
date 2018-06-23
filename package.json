@@ -1,6 +1,6 @@
 {
   "name": "vue-rich-grid",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Powerful and flexible grid component for Vuejs",
   "main": "src/main.js",
   "scripts": {
