@@ -5,160 +5,176 @@
         </div>
         <ul>
             <li>
-                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('first')">&lt;&lt;</a>
+                <a :disabled="currentPage === 1"
+                    href="javascript:"
+                    @click="switchPage('first')">&lt;&lt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === 1" href="javascript:" @click="switchPage('previous')">&lt;</a>
+                <a :disabled="currentPage === 1"
+                    href="javascript:"
+                    @click="switchPage('previous')">&lt;</a>
             </li>
             <li v-for="(num,index) in pageNumbers" :key="index">
-                <a :class="[num === currentPage ? 'active': '']" href="javascript:" @click="switchPage(num)">{{num}}</a>
+                <a :class="[num === currentPage ? 'active': '']"
+                    href="javascript:"
+                    @click="switchPage(num)">{{num}}</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('next')">&gt;</a>
+                <a :disabled="currentPage === totalPage"
+                    href="javascript:"
+                    @click="switchPage('next')">&gt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage" href="javascript:" @click="switchPage('last')">&gt;&gt;</a>
+                <a :disabled="currentPage === totalPage"
+                    href="javascript:"
+                    @click="switchPage('last')">&gt;&gt;</a>
             </li>
             <li>
                 <select @change="goPage(1)" v-model="pageSize">
-                    <option v-for="(len, index) in config.pageSizeMenu" :key="index" :value="len">{{len}}</option>
+                    <option v-for="(len, index) in config.pageSizeMenu"
+                            :key="index"
+                            :value="len">{{len}}</option>
                 </select>
             </li>
         </ul>
     </div>
 </template>
 
-<script>
-    import get from 'lodash.get';
+<script type="ts">
+import Vue from 'vue';
+import get from 'lodash.get';
 
-    export default {
-        props: ['settings', 'rowsLength', 'loading'],
-        data(props){
-            return {
-                config: Object.assign({}, {
-                    hidePagerWhenShowingAll: false,
-                    pageSizeMenu: [5,10,20,50,100],
-                }, this.settings),
-                pageSize: parseInt(get(props, 'settings.pageSize', 5), 10),
-                totalRow: parseInt(get(props, 'settings.totalRow', 0), 10),
-                pageNumber: 1,
-                totalPage: 0,
-                currentPage: 1,
-                // total number of page buttons we want
-                // to divide our paging options into.
-                maxPageNumberSize: 4,
-            };
-        },
-        computed:{
-            fromRow: cmp => (cmp.currentPage - 1) * cmp.pageSize + 1,
-            toRow: cmp => cmp.fromRow + cmp.rowsLength - 1,
-            /**
+export default Vue.extend({
+  props: ['settings', 'rowsLength', 'loading'],
+  data(props) {
+    return {
+      config: Object.assign({}, {
+        hidePagerWhenShowingAll: false,
+        pageSizeMenu: [5, 10, 20, 50, 100],
+      }, this.settings),
+      pageSize: parseInt(get(props, 'settings.pageSize', 5), 10),
+      totalRow: parseInt(get(props, 'settings.totalRow', 0), 10),
+      pageNumber: 1,
+      totalPage: 0,
+      currentPage: 1,
+      // total number of page buttons we want
+      // to divide our paging options into.
+      maxPageNumberSize: 4,
+    };
+  },
+  computed: {
+    fromRow: cmp => ((cmp.currentPage - 1) * cmp.pageSize) + 1,
+    toRow: cmp => (cmp.fromRow + cmp.rowsLength) - 1,
+    /**
              * Hides pager if all rows are visible and
              * hidePagerWhenShowingAll was explicitly passed as true
              */
-            hidePager: cmp => ((cmp.totalRow <= cmp.pageSize && cmp.config.hidePagerWhenShowingAll) ||
+    hidePager: cmp => ((cmp.totalRow <= cmp.pageSize && cmp.config.hidePagerWhenShowingAll) ||
                                 cmp.totalRow === 0),
-            /**
+    /**
              * Calculate the different paging options
              * where maxPageNumberSize is the max available
              */
-            pageNumbers: (cmp) => {
-                let start;
-                let end;
-                let numOptions = [];
-                let half = Math.floor(cmp.maxPageNumberSize / 2);
+    pageNumbers: (cmp) => {
+      let start;
+      let end;
+      const numOptions = [];
+      const half = Math.floor(cmp.maxPageNumberSize / 2);
 
-                if(cmp.totalPage < cmp.maxPageNumberSize) {
-                    start = 1;
-                    end = cmp.totalPage;
-                } else if ( cmp.currentPage <= half ) {
-                    start = 1;
-                    end = cmp.maxPageNumberSize;
-                } else if ( cmp.currentPage >= (cmp.totalPage - half) ) {
-                    start = cmp.totalPage - cmp.maxPageNumberSize + 1;
-                    end = cmp.totalPage;
-                } else {
-                    start = cmp.currentPage - half;
-                    end = start + cmp.maxPageNumberSize - 1;
-                }
+      if (cmp.totalPage < cmp.maxPageNumberSize) {
+        start = 1;
+        end = cmp.totalPage;
+      } else if (cmp.currentPage <= half) {
+        start = 1;
+        end = cmp.maxPageNumberSize;
+      } else if (cmp.currentPage >= (cmp.totalPage - half)) {
+        start = (cmp.totalPage - cmp.maxPageNumberSize) + 1;
+        end = cmp.totalPage;
+      } else {
+        start = cmp.currentPage - half;
+        end = (start + cmp.maxPageNumberSize) - 1;
+      }
 
-                for(let i = start;i <= end; i++){
-                    numOptions.push(i);
-                }
+      for (let i = start; i <= end; i++) {
+        numOptions.push(i);
+      }
 
-                return numOptions;
+      return numOptions;
+    },
+  },
+  watch: {
+    // eslint-disable-next-line func-names
+    'settings.totalRow': function (val) {
+      this.totalRow = val;
+      if (!this.config.pageSizeMenu.includes(this.pageSize)) {
+        [this.pageSize] = this.config.pageSizeMenu;
+      }
+      this.calcTotalPage();
+    },
+  },
+  methods: {
+    goPage(pNum, emit = true) {
+      this.currentPage = pNum;
+      if (emit) {
+        this.$emit('page-change', {
+          pageNumber: pNum,
+          pageSize: Number(this.pageSize),
+        });
+      }
+      this.calcTotalPage();
+    },
+    calcTotalPage() {
+      this.totalPage = Math.ceil(this.totalRow / this.pageSize);
+    },
+    switchPage(pageNumber) {
+      if (pageNumber === this.currentPage) {
+        return;
+      }
+
+      if (typeof (pageNumber) === 'string') {
+        switch (pageNumber) {
+          case 'first':
+            if (this.currentPage !== 1) {
+              this.currentPage = 1;
+            } else {
+              return;
             }
-        },
-        watch:{
-            'settings.totalRow':function(val){
-                this.totalRow = val;
-                if(!this.config.pageSizeMenu.includes(this.pageSize)){
-                    this.pageSize = this.config.pageSizeMenu[0];
-                }
-                this.calcTotalPage();
+            break;
+          case 'previous':
+            if (this.currentPage !== 1) {
+              this.currentPage = this.currentPage - 1;
+            } else {
+              return;
             }
-        },
-        methods:{
-            goPage(pNum, emit = true){
-                this.currentPage = pNum;
-                if (emit) {
-                    this.$emit('page-change',{
-                        pageNumber: pNum,
-                        pageSize: Number(this.pageSize)
-                    });
-                }
-                this.calcTotalPage();
-            },
-            calcTotalPage(){
-                this.totalPage = Math.ceil(this.totalRow / this.pageSize);
-            },
-            switchPage(pageNumber){
-                if (pageNumber === this.currentPage) {
-                    return;
-                }
-
-                if(typeof(pageNumber) === 'string'){
-                    switch (pageNumber){
-                        case 'first':
-                            if(this.currentPage!==1) {
-                                this.currentPage = 1;
-                            } else {
-                                return;
-                            }
-                            break;
-                        case 'previous':
-                            if(this.currentPage!==1) {
-                                this.currentPage--;
-                            } else {
-                                return;
-                            }
-                            break;
-                        case 'next':
-                            if(this.currentPage!==this.totalPage) {
-                                this.currentPage++;
-                            } else {
-                                return;
-                            }
-                            break;
-                        case 'last':
-                            if(this.currentPage!==this.totalPage) {
-                                this.currentPage = this.totalPage;
-                            } else {
-                                return;
-                            }
-                            break;
-                    }
-                }else if(typeof(pageNumber) === 'number'){
-                    this.currentPage = pageNumber;
-                }
-                this.goPage(this.currentPage);
-            },
-        },
-        mounted(){
-            // Lets not emit on the first mount
-            this.goPage(1, false);
+            break;
+          case 'next':
+            if (this.currentPage !== this.totalPage) {
+              this.currentPage = this.currentPage + 1;
+            } else {
+              return;
+            }
+            break;
+          case 'last':
+            if (this.currentPage !== this.totalPage) {
+              this.currentPage = this.totalPage;
+            } else {
+              return;
+            }
+            break;
+          default:
+            console.log('Trying to switch page number that is not defined');
         }
-    }
+      } else if (typeof (pageNumber) === 'number') {
+        this.currentPage = pageNumber;
+      }
+      this.goPage(this.currentPage);
+    },
+  },
+  mounted() {
+    // Lets not emit on the first mount
+    this.goPage(1, false);
+  },
+});
 </script>
 
 <style lang="scss" scoped>
