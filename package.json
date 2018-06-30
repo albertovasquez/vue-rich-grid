@@ -1,10 +1,10 @@
 {
   "name": "vue-rich-grid",
-  "version": "1.0.25",
+  "version": "1.0.27",
   "description": "Powerful and flexible grid component for Vuejs",
   "private": false,
   "types": "dist/src/main.d.ts",
-  "main": "dist/vue-rich-grid.umd.min.js",
+  "main": "dist/vue-rich-grid.umd.js",
   "scripts": {
     "build": "vue-cli-service build --target lib ./src/main.ts",
     "prepare": "npm run build",
