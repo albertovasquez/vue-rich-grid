@@ -3,7 +3,9 @@ import Column from './Column';
 export default class Row {
     data:any = {};
     constructor(data:any = {}) {
-      this.data = data;
+      this.data = Object.assign({}, data, {
+        isSelected: false,
+      });
     }
 
     /**
