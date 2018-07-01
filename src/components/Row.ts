@@ -19,4 +19,12 @@ export default class Row {
       }
       return column.data.renderer(this.data[column.data.id], this.data);
     }
+
+    getClass() {
+      const classes = [];
+      if (this.data.isSelected) {
+        classes.push('row-selected');
+      }
+      return classes;
+    }
 }
