@@ -200,17 +200,20 @@ export default Vue.extend({
      * Note: This is called externally by ref
      * Do not delete this method or rename it
      */
-    async fetchFromStart() {
+    async fetchFromStart(initialLoad = false) {
       const activeColumn = this.richColumns.find(col => col.active);
+      if (!initialLoad) {
       this.$refs.pager.goPage(1, false);
+      }
       this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
+      try {
       await this.fetchRows(0);
-    },
-    async initialFetch() {
-      const activeColumn = this.richColumns.find(col => col.active);
-      this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
-      await this.fetchRows(0);
+      } catch (ex) {
+        log.error({ from: 0, exception: ex }, 'issue fetching rows');
+      }
+      if (initialLoad) {
       this.initialLoad = false;
+      }
     },
     async fetchRows(start = 0) {
       this.setLoading(true);
@@ -297,7 +300,7 @@ export default Vue.extend({
     // then perform the initial search
     // if option of render on load is true
     if (this.initialLoad) {
-      this.initialFetch();
+      this.fetchFromStart();
     }
   },
 });
