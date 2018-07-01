@@ -35,6 +35,7 @@
   "homepage": "https://github.com/albertovasquez/vue-rich-grid#readme",
   "dependencies": {
     "lodash.get": "^4.4.2",
+    "pino": "^4.17.3",
     "vue": "^2.5.16"
   },
   "devDependencies": {
