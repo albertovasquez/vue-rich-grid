@@ -37,10 +37,14 @@
                             <td v-else :key="column.data.id" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
                         </template>
                     </tr>
+                    <tr v-show="(initialLoad && !rows.length) && !loading">
+                      <!-- default state // prevents bounce when we start doing something -->
+                      <td :colspan="richColumns.length" class="richgrid-nodata"></td>
+                    </tr>
                     <tr v-show="(initialLoad && !rows.length) && loading">
                       <td :colspan="richColumns.length" class="richgrid-nodata">{{settings.loadingText}}</td>
                     </tr>
-                    <tr v-show="!rows.length && !loading">
+                    <tr v-show="!rows.length && !loading && !initialLoad">
                         <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="richColumns.length" class="richgrid-nodata">
                             <slot name="nodata"></slot>
                         </td>
@@ -83,8 +87,7 @@ export default Vue.extend({
   },
   computed: {
     allRowsSelected: cmp => cmp.rows.length > 0 &&
-             !cmp.initialLoad &&
-             !cmp.rows.some(row => !row.data.isSelected),
+             cmp.rows.filter(row => row.data.isSelected).length === cmp.rows.length,
     sortedRows: ({ rows, ...cmp }) => {
       if (cmp.loadType === 'local') {
         // we are dealing with data array
@@ -266,6 +269,7 @@ export default Vue.extend({
     const defaults = Object.assign({}, {
       baseParams: get(props, 'options.baseParams', {}),
       noDataText: 'No data found',
+      showOnLoad: false,
       loadingText: 'Loading...',
       pageSizeMenu: [5, 10, 20, 50, 100, 300],
     }, props.options);
@@ -306,7 +310,7 @@ export default Vue.extend({
     // selected column is if any at all.
     // then perform the initial search
     // if option of render on load is true
-    if (this.initialLoad) {
+    if (this.initialLoad && this.settings.showOnLoad) {
       this.fetchFromStart();
     }
   },
