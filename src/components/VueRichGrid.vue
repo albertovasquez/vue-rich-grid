@@ -5,25 +5,33 @@
                 <thead>
                     <tr>
                         <th v-for="column in richColumns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="column.data.id" :style="column.getStyle()">
-                            <!-- eslint-disable-next-line max-len -->
-                            <svg v-show="column.data.sortable" :class="column.data.dir" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="10px" height="10px" viewBox="0 0 401.998 401.998" style="top: 1px;position: relative; enable-background:new 0 0 401.998 401.998;" xml:space="preserve">
-                                <g class="column-sort-up">
-                                    <!-- eslint-disable-next-line max-len -->
-                                    <path d="M73.092,164.452h255.813c4.949,0,9.233-1.807,12.848-5.424c3.613-3.616,5.427-7.898,5.427-12.847 c0-4.949-1.813-9.229-5.427-12.85L213.846,5.424C210.232,1.812,205.951,0,200.999,0s-9.233,1.812-12.85,5.424L60.242,133.331 c-3.617,3.617-5.424,7.901-5.424,12.85c0,4.948,1.807,9.231,5.424,12.847C63.863,162.645,68.144,164.452,73.092,164.452z"/>
-                                </g>
-                                <g class="column-sort-down">
-                                    <!-- eslint-disable-next-line max-len -->
-                                    <path d="M328.905,237.549H73.092c-4.952,0-9.233,1.808-12.85,5.421c-3.617,3.617-5.424,7.898-5.424,12.847 c0,4.949,1.807,9.233,5.424,12.848L188.149,396.57c3.621,3.617,7.902,5.428,12.85,5.428s9.233-1.811,12.847-5.428l127.907-127.906 c3.613-3.614,5.427-7.898,5.427-12.848c0-4.948-1.813-9.229-5.427-12.847C338.139,239.353,333.854,237.549,328.905,237.549z" style=""/>
-                                </g>
-                            </svg>
-                            <span>{{ column.data.text }}&nbsp;</span>
+                            <span v-if="column.data.isCheckbox" :key="column.data.id">
+                              <input type="checkbox" :checked="allRowsSelected" @click="toggleCheckboxes" />
+                            </span>
+                            <span v-else>
+                              <!-- eslint-disable-next-line max-len -->
+                              <svg v-show="column.data.sortable" :class="column.data.dir" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="10px" height="10px" viewBox="0 0 401.998 401.998" style="top: 1px;position: relative; enable-background:new 0 0 401.998 401.998;" xml:space="preserve">
+                                  <g class="column-sort-up">
+                                      <!-- eslint-disable-next-line max-len -->
+                                      <path d="M73.092,164.452h255.813c4.949,0,9.233-1.807,12.848-5.424c3.613-3.616,5.427-7.898,5.427-12.847 c0-4.949-1.813-9.229-5.427-12.85L213.846,5.424C210.232,1.812,205.951,0,200.999,0s-9.233,1.812-12.85,5.424L60.242,133.331 c-3.617,3.617-5.424,7.901-5.424,12.85c0,4.948,1.807,9.231,5.424,12.847C63.863,162.645,68.144,164.452,73.092,164.452z"/>
+                                  </g>
+                                  <g class="column-sort-down">
+                                      <!-- eslint-disable-next-line max-len -->
+                                      <path d="M328.905,237.549H73.092c-4.952,0-9.233,1.808-12.85,5.421c-3.617,3.617-5.424,7.898-5.424,12.847 c0,4.949,1.807,9.233,5.424,12.848L188.149,396.57c3.621,3.617,7.902,5.428,12.85,5.428s9.233-1.811,12.847-5.428l127.907-127.906 c3.613-3.614,5.427-7.898,5.427-12.848c0-4.948-1.813-9.229-5.427-12.847C338.139,239.353,333.854,237.549,328.905,237.549z" style=""/>
+                                  </g>
+                              </svg>
+                              {{ column.data.text }}
+                            </span>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, rowIndex) in sortedRows" :class="{'odd':(rowIndex % 2)}" :key="rowIndex">
+                    <tr v-for="(row, rowIndex) in sortedRows" :class="[{'odd':(rowIndex % 2)}, row.getClass()]" :key="rowIndex">
                         <template v-for="column in richColumns">
-                            <td v-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="column.data.id" :class="[column.getRowClass()]">
+                            <td v-if="column.data.isCheckbox" :key="column.data.id">
+                              <input type="checkbox" :checked="row.data.isSelected" @click="toggleCheckbox(row.data)" />
+                            </td>
+                            <td v-else-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="column.data.id" :class="[column.getRowClass()]">
                                 <slot :name="column.data.id" :column="column.data" :data="row.data"></slot>
                             </td>
                             <td v-else :key="column.data.id" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
@@ -66,8 +74,12 @@ export default Vue.extend({
       type: Array,
       default() { return []; },
     },
+    onSelectionChange: null,
   },
   computed: {
+    allRowsSelected: cmp => cmp.rows.length > 0 &&
+             !cmp.initialLoad &&
+             !cmp.rows.some(row => !row.data.isSelected),
     sortedRows: ({ rows, ...cmp }) => {
       if (cmp.loadType === 'local') {
         // we are dealing with data array
@@ -94,6 +106,25 @@ export default Vue.extend({
     },
   },
   methods: {
+    selectionChanged() {
+      this.$emit('selectionChange', this.rows.filter(row => row.data.isSelected));
+    },
+    toggleCheckboxes() {
+      const { allRowsSelected } = this;
+      this.rows = this.rows.map((row) => {
+        const newRow = row;
+        newRow.data.isSelected = !allRowsSelected;
+        return newRow;
+      });
+      this.selectionChanged();
+    },
+    toggleCheckbox(data) {
+      const selectedRow = this.rows.find(row => row.data.id === data.id);
+      if (selectedRow) {
+        selectedRow.data.isSelected = !selectedRow.data.isSelected;
+      }
+      this.selectionChanged();
+    },
     /**
      * custom emitter used in the event
      * options is passed with a busEmitter
@@ -213,6 +244,7 @@ export default Vue.extend({
       // populate rows with array of Classes
       this.rowsLength = rows.length;
       this.rows = rows.map(row => new Row(row));
+      this.selectionChanged();
       this.setLoading(false);
     },
   },
@@ -366,6 +398,11 @@ export default Vue.extend({
                         border-left: 1px solid #eee;
                         border-right: 1px solid #eee;
                     }
+                }
+                &.row-selected {
+                  td {
+                    background-color: #f5f5e9;
+                  }
                 }
             }
         }
