@@ -301,9 +301,13 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
     .vue-rich-grid {
-        font-family: 'Avenir', Arial;
+        font-family: 'Avenir', inherit;
         font-size: 14px;
         transition: opacity .6s;
+
+        input[type='checkbox'] {
+            margin: 0;
+        }
 
         &.loading {
             tbody {
