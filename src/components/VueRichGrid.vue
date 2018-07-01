@@ -37,8 +37,8 @@
                             <td v-else :key="column.data.id" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
                         </template>
                     </tr>
-                    <tr v-show="initialLoad && loading">
-                      <td :colspan="richColumns.length">{{settings.loadingText}}</td>
+                    <tr v-show="(initialLoad && !rows.length) && loading">
+                      <td :colspan="richColumns.length" class="richgrid-nodata">{{settings.loadingText}}</td>
                     </tr>
                     <tr v-show="!rows.length && !loading">
                         <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="richColumns.length" class="richgrid-nodata">
