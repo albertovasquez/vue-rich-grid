@@ -66,15 +66,15 @@ export default Vue.extend({
     fromRow: cmp => ((cmp.currentPage - 1) * cmp.pageSize) + 1,
     toRow: cmp => (cmp.fromRow + cmp.rowsLength) - 1,
     /**
-             * Hides pager if all rows are visible and
-             * hidePagerWhenShowingAll was explicitly passed as true
-             */
+     * Hides pager if all rows are visible and
+     * hidePagerWhenShowingAll was explicitly passed as true
+     */
     hidePager: cmp => ((cmp.totalRow <= cmp.pageSize && cmp.config.hidePagerWhenShowingAll) ||
-                                cmp.totalRow === 0),
+                        cmp.totalRow === 0),
     /**
-             * Calculate the different paging options
-             * where maxPageNumberSize is the max available
-             */
+     * Calculate the different paging options
+     * where maxPageNumberSize is the max available
+     */
     pageNumbers: (cmp) => {
       let start;
       let end;
