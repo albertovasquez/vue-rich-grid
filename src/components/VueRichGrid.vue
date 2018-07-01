@@ -176,6 +176,7 @@ export default Vue.extend({
       const activeColumn = this.richColumns.find(col => col.active);
       this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
       await this.fetchRows(0);
+      this.initialLoad = false;
     },
     async fetchRows(start = 0) {
       this.setLoading(true);
@@ -260,7 +261,6 @@ export default Vue.extend({
     // then perform the initial search
     // if option of render on load is true
     if (this.initialLoad) {
-      this.initialLoad = false;
       this.initialFetch();
     }
   },
