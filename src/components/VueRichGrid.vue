@@ -319,7 +319,7 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
     .vue-rich-grid {
-        font-family: 'Avenir', inherit;
+        font-family: 'Avenir';
         font-size: 14px;
         transition: opacity .6s;
 
