@@ -269,7 +269,7 @@ export default Vue.extend({
     const defaults = Object.assign({}, {
       baseParams: get(props, 'options.baseParams', {}),
       noDataText: 'No data found',
-      showOnLoad: false,
+      fetchOnLoad: false,
       loadingText: 'Loading...',
       pageSizeMenu: [5, 10, 20, 50, 100, 300],
     }, props.options);
@@ -310,7 +310,7 @@ export default Vue.extend({
     // selected column is if any at all.
     // then perform the initial search
     // if option of render on load is true
-    if (this.initialLoad && this.settings.showOnLoad) {
+    if (this.initialLoad && this.settings.fetchOnLoad) {
       this.fetchFromStart();
     }
   },
