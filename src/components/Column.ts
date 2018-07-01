@@ -2,7 +2,10 @@ interface Data {
     isActive: boolean,
     dir: string,
     id: string,
+    isCheckbox: boolean,
+    isExpander: boolean,
     width: number,
+    type: string|null,
     renderer: (id: string, data: object) => string,
     align: string,
     sortable: boolean,
@@ -17,6 +20,8 @@ export default class Column {
     data: Data;
     constructor(column: Data, baseParams: BaseParams) {
       this.data = column;
+      this.data.isCheckbox = (this.data.type === 'checkbox');
+      this.data.isExpander = (this.data.type === 'expander');
       if (column.id === baseParams.sort) {
         this.data.isActive = true;
       } else {
@@ -40,6 +45,8 @@ export default class Column {
     getStyle() {
       if (this.data.width) {
         return `width:${this.data.width}px`;
+      } else if (this.data.isCheckbox) {
+        return `width:28px`;
       }
       return '';
     }
