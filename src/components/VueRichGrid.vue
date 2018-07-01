@@ -37,6 +37,9 @@
                             <td v-else :key="column.data.id" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
                         </template>
                     </tr>
+                    <tr v-show="initialLoad && loading">
+                      <td :colspan="richColumns.length">{{settings.loadingText}}</td>
+                    </tr>
                     <tr v-show="!rows.length && !loading">
                         <td v-if="typeof $slots['nodata'] !== 'undefined'" :colspan="richColumns.length" class="richgrid-nodata">
                             <slot name="nodata"></slot>
@@ -253,6 +256,7 @@ export default Vue.extend({
     const defaults = Object.assign({}, {
       baseParams: get(props, 'options.baseParams', {}),
       noDataText: 'No data found',
+      loadingText: 'Loading...',
       pageSizeMenu: [5, 10, 20, 50, 100, 300],
     }, props.options);
 
