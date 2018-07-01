@@ -54,12 +54,14 @@
 </template>
 
 <script type="ts">
+import pino from 'pino';
 import get from 'lodash.get';
 import Vue from 'vue';
 import Row from './Row';
 import Column from './Column';
 import RichPage from './VueRichPage.vue';
 
+const log = pino();
 let componentCount = 0;
 export default Vue.extend({
   components: { richPage: RichPage },
@@ -203,16 +205,16 @@ export default Vue.extend({
     async fetchFromStart(initialLoad = false) {
       const activeColumn = this.richColumns.find(col => col.active);
       if (!initialLoad) {
-      this.$refs.pager.goPage(1, false);
+        this.$refs.pager.goPage(1, false);
       }
       this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
       try {
-      await this.fetchRows(0);
+        await this.fetchRows(0);
       } catch (ex) {
         log.error({ from: 0, exception: ex }, 'issue fetching rows');
       }
       if (initialLoad) {
-      this.initialLoad = false;
+        this.initialLoad = false;
       }
     },
     async fetchRows(start = 0) {
@@ -226,7 +228,12 @@ export default Vue.extend({
       // get if a plugin was added that
       // provides the method and a url is provided
       if (this.httpGet && this.settings.url) {
-        const response = await this.httpGet(this.settings.url);
+        let response;
+        try {
+          response = await this.httpGet(this.settings.url);
+        } catch (ex) {
+          log.error({ url: this.settings.url, exception: ex }, 'error httpGet');
+        }
 
         // get rows
         if (this.settings.rootElement) {
