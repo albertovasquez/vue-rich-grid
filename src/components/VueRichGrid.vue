@@ -269,7 +269,7 @@ export default Vue.extend({
     const defaults = Object.assign({}, {
       baseParams: get(props, 'options.baseParams', {}),
       noDataText: 'No data found',
-      fetchOnLoad: false,
+      fetchOnLoad: true,
       loadingText: 'Loading...',
       pageSizeMenu: [5, 10, 20, 50, 100, 300],
     }, props.options);
