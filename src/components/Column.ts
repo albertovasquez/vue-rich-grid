@@ -45,8 +45,6 @@ export default class Column {
     getStyle() {
       if (this.data.width) {
         return `width:${this.data.width}px`;
-      } else if (this.data.isCheckbox) {
-        return `width:28px`;
       }
       return '';
     }
@@ -64,6 +62,11 @@ export default class Column {
         if (this.data.isActive) {
           colClasses.push('active-column');
         }
+      }
+      if (this.data.isExpander) {
+        colClasses.push('expander');
+      } else if (this.data.isCheckbox) {
+        colClasses.push('checkbox');
       }
 
       return colClasses;

@@ -1,5 +1,5 @@
 <template>
-    <div :class="[loading ? 'pager-loading' : '', hidePager ? 'hide-pager' : '', 'vue-rich-pager' ]">
+    <div :class="[isDisabled ? 'pager-disabled' : '', showPager ? 'show-pager' : '', 'vue-rich-pager' ]">
         <div class="vue-page-info">
             {{ `Showing ${fromRow} to ${toRow} of ${totalRow} entries` }}
         </div>
@@ -41,21 +41,25 @@
 </template>
 
 <script type="ts">
+import pino from 'pino';
 import Vue from 'vue';
 import get from 'lodash.get';
 
+const log = pino();
+
 export default Vue.extend({
-  props: ['settings', 'rowsLength', 'loading'],
+  props: ['settings', 'rowsLength', 'isDisabled'],
   data(props) {
     return {
       config: Object.assign({}, {
-        hidePagerWhenShowingAll: false,
+        hidePagingWhenNotNeeded: false,
         pageSizeMenu: [5, 10, 20, 50, 100],
       }, this.settings),
       pageSize: parseInt(get(props, 'settings.pageSize', 5), 10),
       totalRow: parseInt(get(props, 'settings.totalRow', 0), 10),
       pageNumber: 1,
       totalPage: 0,
+      loadedFirstTime: false,
       currentPage: 1,
       // total number of page buttons we want
       // to divide our paging options into.
@@ -67,10 +71,15 @@ export default Vue.extend({
     toRow: cmp => (cmp.fromRow + cmp.rowsLength) - 1,
     /**
      * Hides pager if all rows are visible and
-     * hidePagerWhenShowingAll was explicitly passed as true
+     * hidePagingWhenNotNeeded was explicitly passed as true
      */
-    hidePager: cmp => ((cmp.totalRow <= cmp.pageSize && cmp.config.hidePagerWhenShowingAll) ||
-                        cmp.totalRow === 0),
+    showPager: (cmp) => {
+      const pagingNotNeededToViewAllRows = cmp.totalRow <= cmp.pageSize;
+      if (!cmp.loadedFirstTime) {
+        return false;
+      }
+      return !pagingNotNeededToViewAllRows || (pagingNotNeededToViewAllRows && !cmp.config.hidePagingWhenNotNeeded);
+    },
     /**
      * Calculate the different paging options
      * where maxPageNumberSize is the max available
@@ -110,6 +119,7 @@ export default Vue.extend({
         [this.pageSize] = this.config.pageSizeMenu;
       }
       this.calcTotalPage();
+      this.loadedFirstTime = true;
     },
   },
   methods: {
@@ -162,7 +172,7 @@ export default Vue.extend({
             }
             break;
           default:
-            console.log('Trying to switch page number that is not defined');
+            log.warn('Trying to switch page number that is not defined');
         }
       } else if (typeof (pageNumber) === 'number') {
         this.currentPage = pageNumber;
@@ -185,13 +195,13 @@ export default Vue.extend({
         font-family: 'Avenir', Arial;
         transition: opacity .3s;
         margin: 0;
-        display: block;
+        display: none;
         text-align: right;
-        &.pager-loading {
+        &.pager-disabled {
             opacity: .8;
         }
-        &.hide-pager {
-            display:none;
+        &.show-pager {
+            display:block;
         }
         > ul {
             font-size: 12px;

@@ -1,6 +1,6 @@
 {
   "name": "vue-rich-grid",
-  "version": "1.0.38",
+  "version": "1.0.39",
   "description": "Powerful and flexible grid component for Vuejs",
   "private": false,
   "types": "dist/src/main.d.ts",
@@ -36,10 +36,12 @@
   "dependencies": {
     "lodash.get": "^4.4.2",
     "pino": "^4.17.3",
-    "vue": "^2.5.16"
+    "vue": "^2.5.16",
+    "vue-promised": "^0.2.2"
   },
   "devDependencies": {
     "@types/jest": "^22.0.1",
+    "@types/pino": "^4.16.0",
     "@vue/cli-plugin-babel": "^3.0.0-beta.15",
     "@vue/cli-plugin-eslint": "^3.0.0-beta.15",
     "@vue/cli-plugin-typescript": "^3.0.0-beta.15",

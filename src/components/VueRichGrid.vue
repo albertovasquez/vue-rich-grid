@@ -1,11 +1,11 @@
 <template>
     <div :id="richId">
-        <div :class="[loading ? 'loading' : '', 'vue-rich-grid']">
+        <div :class="[isDisabled ? 'disabled' : '', 'vue-rich-grid']">
             <table>
                 <thead>
                     <tr>
-                        <th v-for="column in richColumns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="column.data.id" :style="column.getStyle()">
-                            <span v-if="column.data.isCheckbox" :key="column.data.id">
+                        <th v-for="(column, index) in richColumns" v-on="sortable(column.data)" rowspan="1" colspan="1" :class="[column.getClass()]" :key="index" :style="column.getStyle()">
+                            <span v-if="column.data.isCheckbox" :key="index">
                               <input type="checkbox" :checked="allRowsSelected" @click="toggleCheckboxes" />
                             </span>
                             <span v-else>
@@ -26,22 +26,39 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, rowIndex) in sortedRows" :class="[{'odd':(rowIndex % 2)}, row.getClass()]" :key="rowIndex">
-                        <template v-for="column in richColumns">
-                            <td v-if="column.data.isCheckbox" :key="column.data.id">
+                    <tr v-for="(row, rowIndex) in sortedRows" :class="[{'odd':row.data.isOdd}, row.getClass()]" :key="rowIndex">
+                        <td v-if="row.data.isExpandedRow" :colspan="richColumns.length">
+                          <promised :promise="row.data.expandedData">
+                            <div class="row-loading">
+                              <!-- yes we need all these divs -->
+                              <div style="color: #84a5dd" class="la-ball-pulse la-sm"><div></div><div></div><div></div></div>
+                            </div>
+                            <!-- The default scoped slots will be used as the result -->
+                            <div slot="then" slot-scope="data" v-html="data"></div>
+                            <!-- The 'catch' named scoped slots will be used if there is an error -->
+                            <div slot="catch" slot-scope="error">Error: {{ error.message }}</div>
+                          </promised>
+                        </td>
+                        <template v-else v-for="(column, colIndex) in richColumns">
+                            <td v-if="column.data.isExpander" :key="colIndex">
+                              <div class="expander-wrapper" @click="row.toggleExpander(column)">
+                                <i :class="[{'right': !row.data.isExpanded}, 'arrow']"></i>
+                              </div>
+                            </td>
+                            <td v-else-if="column.data.isCheckbox" :key="colIndex">
                               <input type="checkbox" :checked="row.data.isSelected" @click="toggleCheckbox(row.data)" />
                             </td>
-                            <td v-else-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="column.data.id" :class="[column.getRowClass()]">
+                            <td v-else-if="typeof $scopedSlots[column.data.id] !== 'undefined'" :key="colIndex" :class="[column.getRowClass()]">
                                 <slot :name="column.data.id" :column="column.data" :data="row.data"></slot>
                             </td>
-                            <td v-else :key="column.data.id" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
+                            <td v-else :key="colIndex" :class="[column.getRowClass()]" v-html="row.renderData(column)"></td>
                         </template>
                     </tr>
                     <tr v-show="(initialLoad && !rows.length) && !loading">
                       <!-- default state // prevents bounce when we start doing something -->
                       <td :colspan="richColumns.length" class="richgrid-nodata"></td>
                     </tr>
-                    <tr v-show="(initialLoad && !rows.length) && loading">
+                    <tr v-show="!rows.length && loading">
                       <td :colspan="richColumns.length" class="richgrid-nodata">{{settings.loadingText}}</td>
                     </tr>
                     <tr v-show="!rows.length && !loading && !initialLoad">
@@ -53,7 +70,7 @@
                 </tbody>
             </table>
         </div>
-        <rich-page :settings="pageSet" :rowsLength="rowsLength" ref="pager" :loading="loading" @page-change="pageChange"></rich-page>
+        <rich-page :settings="pageSet" :rowsLength="rowsLength" ref="pager" :isDisabled="isDisabled" @page-change="pageChange"></rich-page>
     </div>
 </template>
 
@@ -61,14 +78,16 @@
 import pino from 'pino';
 import get from 'lodash.get';
 import Vue from 'vue';
+import Promised from 'vue-promised';
 import Row from './Row';
 import Column from './Column';
 import RichPage from './VueRichPage.vue';
 
 const log = pino();
 let componentCount = 0;
+
 export default Vue.extend({
-  components: { richPage: RichPage },
+  components: { richPage: RichPage, promised: Promised },
   name: 'richgrid',
   props: {
     columns: {
@@ -86,9 +105,11 @@ export default Vue.extend({
     onSelectionChange: null,
   },
   computed: {
+    isDisabled: cmp => cmp.loading || cmp.disabled,
     allRowsSelected: cmp => cmp.rows.length > 0 &&
              cmp.rows.filter(row => row.data.isSelected).length === cmp.rows.length,
     sortedRows: ({ rows, ...cmp }) => {
+      let newRows = rows;
       if (cmp.loadType === 'local') {
         // we are dealing with data array
         // all sorts and filters are done locally
@@ -108,14 +129,30 @@ export default Vue.extend({
           });
         }
         // limit by page size
-        return rows.slice(cmp.params.start, cmp.params.start + cmp.pageSet.pageSize);
+        newRows = newRows.slice(cmp.params.start, cmp.params.start + cmp.pageSet.pageSize);
       }
-      return rows;
+
+      // let's add any expander rows
+      return newRows.map((row, index) => {
+        // Calculating isOdd before we add expander
+        row.data.isOdd = (index % 2); // eslint-disable-line no-param-reassign
+        return row;
+      }).reduce((accum, row) => {
+        accum.push(row);
+        if (row.data.isExpanded) {
+          accum.push(new Row(Object.assign({}, row.data, {
+            isExpanded: false, // I am the expended row
+            isExpandedRow: true,
+            isSelected: false,
+          })));
+        }
+        return accum;
+      }, []);
     },
   },
   methods: {
     selectionChanged() {
-      this.$emit('selectionChange', this.rows.filter(row => row.data.isSelected));
+      this.$emit('selectionChange', this.rows.filter(row => row.data.isSelected).map(row => row.data));
     },
     toggleCheckboxes() {
       const { allRowsSelected } = this;
@@ -195,37 +232,13 @@ export default Vue.extend({
       }
 
       this.settings.baseParams.sort = clickedColumn.id;
-      this.fetchFromStart();
-    },
-    /**
-     * Fetch from first page
-     * method to call when you are
-     * fetching rows from a sort
-     * No event is fired from this event
-     * Note: This is called externally by ref
-     * Do not delete this method or rename it
-     */
-    async fetchFromStart(initialLoad = false) {
-      const activeColumn = this.richColumns.find(col => col.active);
-      if (!initialLoad) {
-        this.$refs.pager.goPage(1, false);
-      }
-      this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
-      try {
-        await this.fetchRows(0);
-      } catch (ex) {
-        log.error({ from: 0, exception: ex }, 'issue fetching rows');
-      }
-      if (initialLoad) {
-        this.initialLoad = false;
-      }
+      this.fetchFromStart(false);
     },
     async fetchRows(start = 0) {
       this.setLoading(true);
       this.params.start = start;
 
       let rows = this.$props.data || [];
-      this.pageSet.totalRow = rows.length;
 
       // only try to do an async
       // get if a plugin was added that
@@ -254,6 +267,7 @@ export default Vue.extend({
         }
         this.loadType = 'http';
       } else if (rows.length) {
+        this.pageSet.totalRow = rows.length;
         this.loadType = 'local';
       }
 
@@ -263,6 +277,39 @@ export default Vue.extend({
       this.selectionChanged();
       this.setLoading(false);
     },
+    // ** Below are methods available to parent via refs
+    /**
+     * Fetch from first page
+     * method to call when you are
+     * fetching rows from a sort
+     * No event is fired from this event
+     * Note: This is called externally by ref
+     * Do not delete this method or rename it
+     */
+    async fetchFromStart(initialLoad = true) {
+      const activeColumn = this.richColumns.find(col => col.active);
+      if (!initialLoad) {
+        this.$refs.pager.goPage(1, false);
+      }
+      this.params.dir = get(activeColumn, 'data.dir', this.settings.baseParams.dir);
+      try {
+        await this.fetchRows(0);
+      } catch (ex) {
+        log.error({ from: 0, exception: ex }, 'issue fetching rows');
+      }
+
+      this.initialLoad = false;
+      this.enable();
+    },
+    // Visual modifiers only. If parent
+    // sends calls other methods via ref
+    // they will still be performed
+    disable() {
+      this.disabled = true;
+    },
+    enable() {
+      this.disabled = false;
+    },
   },
   data(props) {
     // lets merge our passed options with defaults
@@ -270,6 +317,7 @@ export default Vue.extend({
       baseParams: get(props, 'options.baseParams', {}),
       noDataText: 'No data found',
       fetchOnLoad: true,
+      hidePagingWhenNotNeeded: false,
       loadingText: 'Loading...',
       pageSizeMenu: [5, 10, 20, 50, 100, 300],
     }, props.options);
@@ -280,6 +328,7 @@ export default Vue.extend({
       settings: defaults,
       pageSet: {
         totalRow: 0,
+        hidePagingWhenNotNeeded: defaults.hidePagingWhenNotNeeded,
         pageSize: defaults.baseParams.limit,
         pageSizeMenu: defaults.pageSizeMenu,
       },
@@ -288,6 +337,7 @@ export default Vue.extend({
       },
       loadType: 'local', // 'local' || 'http'
       rowsLength: 0,
+      disabled: false,
       loading: false,
       richId: null,
       richColumns: props.columns.map(column => new Column(column, defaults.baseParams)),
@@ -318,16 +368,20 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
+    @import '../css/_loadings.css';
     .vue-rich-grid {
         font-family: 'Avenir';
         font-size: 14px;
         transition: opacity .6s;
-
+        .row-loading {
+          padding-top: 5px;
+          margin-left: 50%;
+        }
         input[type='checkbox'] {
             margin: 0;
         }
 
-        &.loading {
+        &.disabled {
             tbody {
                 opacity: .4;
             }
@@ -375,7 +429,14 @@ export default Vue.extend({
                 background: #eaebec;
                 background-image: none;
                 text-shadow: none;
-
+                &.expander {
+                  width: 20px;
+                  padding-right: 0;
+                }
+                &.checkbox {
+                  width: 28px;
+                  padding:0;
+                }
                 &.sortable {
                     &:hover {
                         cursor: pointer;
@@ -426,7 +487,48 @@ export default Vue.extend({
                     background-color: #f5f5e9;
                   }
                 }
+                &.row-expansion {
+                  td {
+                    text-align: left;
+                    padding-left: 40px;
+                    background-color: #eff7ff;
+                  }
+                }
             }
+        }
+        .expander-wrapper {
+          display: inline-block;
+          position: relative;
+          z-index: 1;
+          padding: 1em;
+          margin: -1em;
+
+          &:hover {
+            i {
+              &.arrow {
+                &.right {
+                  border: solid #33abd9;
+                  border-width: 0 2px 2px 0;
+                }
+              }
+            }
+            cursor: pointer;
+          }
+
+          i {
+            &.arrow {
+              border: solid #33abd9;
+              border-width: 0 2px 2px 0;
+              display: inline-block;
+              padding: 2px;
+              &.right {
+                  border: solid black;
+                  border-width: 0 2px 2px 0;
+                  transform: rotate(-45deg);
+                  -webkit-transform: rotate(-45deg);
+              }
+            }
+          }
         }
     }
 </style>
