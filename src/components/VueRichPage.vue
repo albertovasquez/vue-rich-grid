@@ -1,16 +1,16 @@
 <template>
     <div :class="[isDisabled ? 'pager-disabled' : '', showPager ? 'show-pager' : '', 'vue-rich-pager' ]">
-        <div class="vue-page-info">
+        <div :class="['vue-page-info', isDisabled ? 'disabled' : '']">
             {{ `Showing ${fromRow} to ${toRow} of ${totalRow} entries` }}
         </div>
         <ul>
             <li>
-                <a :disabled="currentPage === 1"
+                <a :disabled="isDisabled || currentPage === 1"
                     href="javascript:"
                     @click="switchPage('first')">&lt;&lt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === 1"
+                <a :disabled="isDisabled || currentPage === 1"
                     href="javascript:"
                     @click="switchPage('previous')">&lt;</a>
             </li>
@@ -20,17 +20,17 @@
                     @click="switchPage(num)">{{num}}</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage"
+                <a :disabled="isDisabled || currentPage === totalPage"
                     href="javascript:"
                     @click="switchPage('next')">&gt;</a>
             </li>
             <li>
-                <a :disabled="currentPage === totalPage"
+                <a :disabled="isDisabled || currentPage === totalPage"
                     href="javascript:"
                     @click="switchPage('last')">&gt;&gt;</a>
             </li>
             <li>
-                <select @change="goPage(1)" v-model="pageSize">
+                <select :disabled="isDisabled" @change="goPage(1)" v-model="pageSize">
                     <option v-for="(len, index) in config.pageSizeMenu"
                             :key="index"
                             :value="len">{{len}}</option>
@@ -256,6 +256,9 @@ export default Vue.extend({
                     &:hover {
                         box-shadow: $insetHover;
                     }
+                    &[disabled] {
+                      opacity: .45;
+                    }
                 }
             }
         }
@@ -267,6 +270,9 @@ export default Vue.extend({
             float: left;
             border-left-width: 0;
             color: #444;
+            &.disabled {
+              display:none;
+            }
         }
     }
 </style>

@@ -70,7 +70,7 @@
                 </tbody>
             </table>
         </div>
-        <rich-page :settings="pageSet" :rowsLength="rowsLength" ref="pager" :isDisabled="isDisabled" @page-change="pageChange"></rich-page>
+        <rich-page :settings="pageSet" :rowsLength="rowsLength" ref="pager" :isDisabled="isPagerDisabled" @page-change="pageChange"></rich-page>
     </div>
 </template>
 
@@ -105,6 +105,7 @@ export default Vue.extend({
     onSelectionChange: null,
   },
   computed: {
+    isPagerDisabled: cmp => cmp.isDisabled || cmp.sortedRows.length === 0,
     isDisabled: cmp => cmp.loading || cmp.disabled,
     allRowsSelected: cmp => cmp.rows.length > 0 &&
              cmp.rows.filter(row => row.data.isSelected).length === cmp.rows.length,
